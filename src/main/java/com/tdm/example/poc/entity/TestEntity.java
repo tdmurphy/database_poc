@@ -15,7 +15,7 @@ import javax.persistence.Id;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class DatabaseEntity {
+public class TestEntity {
 
     @Id
     private int id;

@@ -1,6 +1,15 @@
 spring:
   application:
     name: database-poc
+  profiles:
+    active: localTest
+
+server:
+  port: 8080
+
+---
+spring:
+  profiles: localTest
   jpa:
     database: postgresql
     show-sql: true
@@ -8,11 +17,10 @@ spring:
     hibernate:
       ddl-auto: validate
   datasource:
-    platform: postgres
     url: jdbc:postgresql://localhost:5432/postgres
     username: postgres
     password: postgres
 
-
-server:
-  port: 8080
+---
+spring:
+  profiles: cloudTest
