@@ -2,7 +2,7 @@ spring:
   application:
     name: database-poc
   profiles:
-    active: localTest
+    active: cloudTest
 
 server:
   port: 8080
@@ -24,3 +24,16 @@ spring:
 ---
 spring:
   profiles: cloudTest
+  jpa:
+    show-sql: true
+    generate-ddl: false
+    hibernate:
+      ddl-auto: validate
+  datasource:
+    username: postgres
+    password: "@password123"
+  cloud:
+    gcp:
+      sql:
+        database-name: poc-postgesql-01
+        instance-connection-name: client-intelligence-705116:europe-west2:poc-postgesql-01
