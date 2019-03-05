@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/poc")
 public class HomeController {
 
-    @GetMapping("/home")
+    @GetMapping("/")
     public String home(){
         String response = "This is the homepage. Below is the available endpoints to query the various databases:<br/>";
 

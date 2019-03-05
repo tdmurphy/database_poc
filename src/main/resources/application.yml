@@ -31,9 +31,11 @@ spring:
       ddl-auto: validate
   datasource:
     username: postgres
-    password: "@password123"
+    password: "@Password123"
   cloud:
     gcp:
       sql:
-        database-name: poc-postgesql-01
+        database-name: postgres
         instance-connection-name: client-intelligence-705116:europe-west2:poc-postgesql-01
+        credentials.location: file:/C:/Users/thoma/Documents/csv_poc/gcp-cred.json
+      project-id: Client Intelligence 705116

@@ -9,9 +9,10 @@ import lombok.Setter;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import java.math.BigDecimal;
 import java.sql.Date;
 
-@Entity
+@Entity(name = "transactions")
 @Getter
 @Setter
 @AllArgsConstructor
@@ -19,10 +20,11 @@ import java.sql.Date;
 public class PostgresEntity {
 
     @Id
+    @Column(name = "trans_reference")
     private String uniqueTransactionReference;
 
     @Column(name = "month_id")
-    private int month;
+    private Integer month;
 
     @Column(name = "iso_ctry_code")
     private String countryCode;
@@ -36,7 +38,7 @@ public class PostgresEntity {
     @Column(name = "account_num")
     private String accountNum;
 
-    @Column(name = "credit/debit")
+    @Column(name = "credit_debit")
     private String creditOrDebit;
 
     @Column(name = "counterparty_type")
@@ -70,7 +72,7 @@ public class PostgresEntity {
     private Date endDate;
 
     @Column(name = "trans_code")
-    private int transCode;
+    private Integer transCode;
 
     @Column(name = "trans_type")
     private String transType;
@@ -82,27 +84,27 @@ public class PostgresEntity {
     private String transChannel;
 
     @Column(name = "trans_id")
-    private int transId;
+    private Integer transId;
 
     @Column(name = "trans_currency")
     private String transCurrency;
 
     @Column(name = "lcy")
-    private float lcy;
+    private BigDecimal lcy;
 
     @Column(name = "rcy")
-    private float rcy;
+    private BigDecimal rcy;
 
     @Column(name = "conv_rate")
-    private float convRate;
+    private BigDecimal convRate;
 
     @Column(name = "intra")
-    private int intra;
+    private Integer intra;
 
     @Column(name = "reversal")
-    private int reversal;
+    private Integer reversal;
 
     @Column(name = "duplicate")
-    private int duplicate;
+    private Integer duplicate;
 
 }
