@@ -29,6 +29,11 @@ spring:
     generate-ddl: false
     hibernate:
       ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          lob:
+            non_contextual_creation: true
   datasource:
     username: postgres
     password: "@Password123"
@@ -39,3 +44,10 @@ spring:
         instance-connection-name: client-intelligence-705116:europe-west2:poc-postgesql-01
         credentials.location: file:/C:/Users/thoma/Documents/csv_poc/gcp-cred.json
       project-id: Client Intelligence 705116
+  bigquery:
+    credentialsLocation: C:/Users/thoma/Documents/csv_poc/
+    credentialsName: gcp-cred.json
+    projectId: client-intelligence-705116
+  elasticsearch:
+    host: 35.189.117.61
+    port: 9200
