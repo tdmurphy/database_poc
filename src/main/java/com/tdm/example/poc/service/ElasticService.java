@@ -70,17 +70,6 @@ public class ElasticService {
         }
     }
 
-    public String loadExampleDocument(TransactionDocument transactionDocument) throws IOException {
-
-        transactionDocument.setUniqueTransactionReference(UUID.randomUUID().toString());
-
-        Map<String,Object> mapping = objectMapper.convertValue(transactionDocument,Map.class);
-
-        IndexRequest indexRequest = new IndexRequest("transaction","_doc",transactionDocument.getUniqueTransactionReference()).source(mapping);
-
-        return restClient.index(indexRequest,RequestOptions.DEFAULT).getResult().toString();
-
-    }
 
     public List<TransactionDocument> searchByRoleIdCust(Long roleIdCust) throws IOException{
 
