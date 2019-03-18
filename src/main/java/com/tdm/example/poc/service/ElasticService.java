@@ -1,17 +1,10 @@
 package com.tdm.example.poc.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.api.gax.paging.Page;
-import com.google.auth.Credentials;
-import com.google.auth.oauth2.GoogleCredentials;
-import com.google.cloud.ReadChannel;
-import com.google.cloud.storage.Blob;
-import com.google.cloud.storage.Storage;
-import com.google.cloud.storage.StorageOptions;
 import com.tdm.example.poc.entity.document.TransactionDocument;
+import com.tdm.example.poc.entity.document.TransactionResultDocument;
+import com.tdm.example.poc.utility.TimeUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.elasticsearch.action.bulk.BulkRequest;
-import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
@@ -23,55 +16,36 @@ import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.io.BufferedReader;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.channels.Channels;
-import java.sql.Date;
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 @Service
 @Slf4j
 public class ElasticService {
 
+    private static final String INDEX_NAME = "transaction";
+
     private RestHighLevelClient restClient;
 
     private ObjectMapper objectMapper;
 
-    private Storage storage;
-    private Page<Blob> objectBlobs;
+    private TimeUtil timeUtil = new TimeUtil();
+
+    private HashMap<String,ArrayList<TimeUtil>> timings = new HashMap<>();
 
     @Autowired
     public ElasticService(RestHighLevelClient restClient, ObjectMapper objectMapper){
         this.restClient = restClient;
         this.objectMapper = objectMapper;
 
-        makeGcsConnection();
+        timings.put("query_1_2",new ArrayList<>());
+        timings.put("query_10_11",new ArrayList<>());
+        timings.put("query_20",new ArrayList<>());
+        timings.put("query_21",new ArrayList<>());
+
     }
 
-    private void makeGcsConnection(){
-        log.info("Establishing connection to google cloud storage...");
-
-        try {
-            Credentials credentials = GoogleCredentials
-                    .fromStream(new FileInputStream("C:/Users/thoma/Documents/csv_poc/gcp-cred.json"));
-            storage = StorageOptions.newBuilder().setCredentials(credentials)
-                    .setProjectId("client-intelligence-705116").build().getService();
-        } catch(Exception e){
-            log.error("Exception when attempting gcs connection.",e);
-        }
-
-        log.info("Successful connection made to Gcs");
-        objectBlobs = storage.list("poc-datastaging-london",Storage.BlobListOption.pageSize(100));
-        for(Blob blob : objectBlobs.iterateAll()){
-            log.info(blob.getName());
-        }
-    }
-
-
-    public List<TransactionDocument> searchByRoleIdCust(Long roleIdCust) throws IOException{
+    public List<TransactionDocument> searchByRoleIdCust(Long roleIdCust) throws IOException {
 
         SearchRequest searchRequest = new SearchRequest();
         SearchSourceBuilder searchBuilder = new SearchSourceBuilder();
@@ -85,6 +59,166 @@ public class ElasticService {
 
         SearchResponse searchResponse = restClient.search(searchRequest,RequestOptions.DEFAULT);
 
+        return getFullResults(searchResponse);
+
+    }
+
+    public List<TransactionResultDocument> testQuery12(Long roleIdCust, String counterpartyCin) throws IOException {
+
+        Long executionStartTime = System.currentTimeMillis();
+
+        SearchRequest searchRequest = new SearchRequest(INDEX_NAME);
+        SearchSourceBuilder searchBuilder = new SearchSourceBuilder();
+        searchBuilder.fetchSource(new String[]{"transDate","counterpartyName","counterpartyCtryCode","transCurrency","lcy","rcy","transType"},null);
+
+        QueryBuilder queryBuilder = QueryBuilders.boolQuery()
+                .must(QueryBuilders.termQuery("roleIdCust",roleIdCust))
+                .must(QueryBuilders.termQuery("counterpartyCin",counterpartyCin))
+                .must(QueryBuilders.rangeQuery("transDate").from("2018-01-01")
+                                                .to("2018-12-31").includeUpper(true).includeLower(true));
+
+        searchBuilder.query(queryBuilder);
+
+        searchRequest.source(searchBuilder);
+
+        TimeUtil executeUtil = new TimeUtil();
+        Long queryStartTime = System.currentTimeMillis();
+        SearchResponse searchResponse = restClient.search(searchRequest,RequestOptions.DEFAULT);
+        Long queryEndTime = System.currentTimeMillis();
+
+        List<TransactionResultDocument> result =  getLimitedResults(searchResponse);
+
+        Long executionEndTime = System.currentTimeMillis();
+
+        executeUtil.setQueryTime(queryEndTime-queryStartTime);
+        executeUtil.setResultSetSize(result.size());
+        executeUtil.setTotalExecutionTime(executionEndTime-executionStartTime);
+        ArrayList<TimeUtil> timeUtils = timings.get("query_1_2");
+        timeUtils.add(executeUtil);
+        timings.put("query_1_2",timeUtils);
+
+        return result;
+    }
+
+    public List<TransactionResultDocument> testQuery1011(Long roleIdCust, String transType) throws IOException {
+
+        Long executionStartTime = System.currentTimeMillis();
+
+        SearchRequest searchRequest = new SearchRequest(INDEX_NAME);
+        SearchSourceBuilder searchBuilder = new SearchSourceBuilder();
+        searchBuilder.fetchSource(new String[]{"transDate","counterpartyName","counterpartyCtryCode","transCurrency","lcy","rcy","transType"},null);
+
+        QueryBuilder queryBuilder = QueryBuilders.boolQuery()
+                .must(QueryBuilders.termQuery("roleIdCust",roleIdCust))
+                .must(QueryBuilders.termQuery("transType",transType))
+                .must(QueryBuilders.rangeQuery("transDate").from("2018-01-01")
+                        .to("2018-01-31").includeUpper(true).includeLower(true));
+
+        searchBuilder.query(queryBuilder);
+
+        searchRequest.source(searchBuilder);
+
+        TimeUtil executeUtil = new TimeUtil();
+        Long queryStartTime = System.currentTimeMillis();
+        SearchResponse searchResponse = restClient.search(searchRequest,RequestOptions.DEFAULT);
+        Long queryEndTime = System.currentTimeMillis();
+
+        List<TransactionResultDocument> result =  getLimitedResults(searchResponse);
+
+        Long executionEndTime = System.currentTimeMillis();
+
+        executeUtil.setQueryTime(queryEndTime-queryStartTime);
+        executeUtil.setResultSetSize(result.size());
+        executeUtil.setTotalExecutionTime(executionEndTime-executionStartTime);
+        ArrayList<TimeUtil> timeUtils = timings.get("query_10_11");
+        timeUtils.add(executeUtil);
+        timings.put("query_10_11",timeUtils);
+
+        return result;
+    }
+
+    public List<TransactionResultDocument> testQuery20(Long roleIdCust, String transType, String transType2, String creditDebit, String transCurrency) throws IOException {
+
+        Long executionStartTime = System.currentTimeMillis();
+
+        SearchRequest searchRequest = new SearchRequest(INDEX_NAME);
+        SearchSourceBuilder searchBuilder = new SearchSourceBuilder();
+        searchBuilder.fetchSource(new String[]{"transDate","counterpartyName","counterpartyCtryCode","transCurrency","lcy","rcy","transType"},null);
+
+        QueryBuilder queryBuilder = QueryBuilders.boolQuery()
+                .must(QueryBuilders.termQuery("roleIdCust",roleIdCust))
+                .must(QueryBuilders.termsQuery("transType",transType,transType2))
+                .must(QueryBuilders.rangeQuery("transDate").from("2018-01-01")
+                        .to("2018-02-28").includeUpper(true).includeLower(true))
+                .must(QueryBuilders.termQuery("creditOrDebit",creditDebit))
+                .must(QueryBuilders.termQuery("transCurrency",transCurrency));
+
+        searchBuilder.query(queryBuilder);
+
+        searchRequest.source(searchBuilder);
+
+        TimeUtil executeUtil = new TimeUtil();
+        Long queryStartTime = System.currentTimeMillis();
+        SearchResponse searchResponse = restClient.search(searchRequest,RequestOptions.DEFAULT);
+        Long queryEndTime = System.currentTimeMillis();
+
+        List<TransactionResultDocument> result =  getLimitedResults(searchResponse);
+
+        Long executionEndTime = System.currentTimeMillis();
+
+        executeUtil.setQueryTime(queryEndTime-queryStartTime);
+        executeUtil.setResultSetSize(result.size());
+        executeUtil.setTotalExecutionTime(executionEndTime-executionStartTime);
+        ArrayList<TimeUtil> timeUtils = timings.get("query_20");
+        timeUtils.add(executeUtil);
+        timings.put("query_20",timeUtils);
+
+        return result;
+    }
+
+    public List<TransactionResultDocument> testQuery21(Long roleIdCust, String transType, String transType2, String transType3, String creditDebit) throws IOException {
+
+        Long executionStartTime = System.currentTimeMillis();
+
+        SearchRequest searchRequest = new SearchRequest(INDEX_NAME);
+        SearchSourceBuilder searchBuilder = new SearchSourceBuilder();
+        searchBuilder.fetchSource(new String[]{"transDate","counterpartyName","counterpartyCtryCode","transCurrency","lcy","rcy","transType"},null);
+
+        QueryBuilder queryBuilder = QueryBuilders.boolQuery()
+                .must(QueryBuilders.termQuery("roleIdCust",roleIdCust))
+                .must(QueryBuilders.termsQuery("transType",transType,transType2,transType3))
+                .must(QueryBuilders.rangeQuery("transDate").from("2018-06-01")
+                        .to("2018-08-31").includeUpper(true).includeLower(true))
+                .must(QueryBuilders.termQuery("creditOrDebit",creditDebit));
+
+        searchBuilder.query(queryBuilder);
+
+        searchRequest.source(searchBuilder);
+
+        TimeUtil executeUtil = new TimeUtil();
+        Long queryStartTime = System.currentTimeMillis();
+        SearchResponse searchResponse = restClient.search(searchRequest,RequestOptions.DEFAULT);
+        Long queryEndTime = System.currentTimeMillis();
+
+        List<TransactionResultDocument> result =  getLimitedResults(searchResponse);
+
+        Long executionEndTime = System.currentTimeMillis();
+
+        executeUtil.setQueryTime(queryEndTime-queryStartTime);
+        executeUtil.setResultSetSize(result.size());
+        executeUtil.setTotalExecutionTime(executionEndTime-executionStartTime);
+        ArrayList<TimeUtil> timeUtils = timings.get("query_21");
+        timeUtils.add(executeUtil);
+        timings.put("query_21",timeUtils);
+
+        return result;
+    }
+
+    public String getTimings(){
+        return timeUtil.getTimings(timings);
+    }
+
+    private List<TransactionDocument> getFullResults(SearchResponse searchResponse){
         SearchHit[] searchHit = searchResponse.getHits().getHits();
 
         List<TransactionDocument> transactionDocuments = new ArrayList<>();
@@ -100,137 +234,24 @@ public class ElasticService {
         }
 
         return transactionDocuments;
-
     }
 
-    public String ingestGcsFile(String startFile) throws InterruptedException {
+    private List<TransactionResultDocument> getLimitedResults(SearchResponse searchResponse){
+        SearchHit[] searchHit = searchResponse.getHits().getHits();
 
-        List<Blob> blobList = StreamSupport.stream(objectBlobs.getValues().spliterator(),false).collect(Collectors.toList());
+        List<TransactionResultDocument> transactionDocuments = new ArrayList<>();
 
-        ArrayList<IndexThread> indexThreads = new ArrayList<>();
+        if (searchHit.length > 0) {
 
-        int tracker = 0;
-
-        for(Blob blob : blobList){
-            if(blob.getName().equals(startFile)){
-                tracker = blobList.indexOf(blob);
-                break;
-            }
+            Arrays.stream(searchHit)
+                    .forEach(hit -> transactionDocuments
+                            .add(objectMapper
+                                    .convertValue(hit.getSourceAsMap(),
+                                            TransactionResultDocument.class))
+                    );
         }
 
-        for(int i = 0; i < 5; i++){
-            indexThreads.add(new IndexThread("Thread " + i,blobList.get(tracker)));
-            indexThreads.get(i).start();
-            tracker++;
-            Thread.sleep(2000);
-        }
-
-        while(tracker < blobList.size()){
-            for(IndexThread thread : indexThreads){
-                if(thread.getState() == Thread.State.TERMINATED){
-                    String name = thread.getName();
-                    thread.interrupt();
-                    thread = new IndexThread(name,blobList.get(tracker++));
-                    thread.start();
-                }
-            }
-        }
-
-
-
-        return "Process finished";
-    }
-
-    private Map<String,Object> buildDocument(String[] documentValues){
-        TransactionDocument document =  TransactionDocument.builder()
-                .uniqueTransactionReference(documentValues[0])
-                .month(Integer.parseInt(documentValues[1]))
-                .countryCode(documentValues[2])
-                .realCustId(documentValues[3])
-                .roleIdCust(Long.parseLong(documentValues[4]))
-                .accountNum(documentValues[5])
-                .creditOrDebit(documentValues[6])
-                .counterpartyType(documentValues[7])
-                .counterpartyCin(documentValues[8])
-                .counterpartyAccountNum(documentValues[9])
-                .counterpartyName(documentValues[10])
-                .counterpartySource(documentValues[11])
-                .counterpartyCtryCode(documentValues[12])
-                .sourceSystem(documentValues[13])
-                .transDate(Date.valueOf(documentValues[14]))
-                .approvalDate(Date.valueOf(documentValues[15]))
-                .endDate(Date.valueOf(documentValues[16]))
-                .transCode(Integer.parseInt(documentValues[17]))
-                .transType(documentValues[18])
-                .transDesc(documentValues[19])
-                .transChannel(documentValues[20])
-                .transId(Integer.parseInt(documentValues[21]))
-                .transCurrency(documentValues[22])
-                .lcy(Float.parseFloat(documentValues[23]))
-                .rcy(Float.parseFloat(documentValues[24]))
-                .convRate(Float.parseFloat(documentValues[25]))
-                .intra(Integer.parseInt(documentValues[26]))
-                .reversal(Integer.parseInt(documentValues[27]))
-                .duplicate(Integer.parseInt(documentValues[28])).build();
-
-        return objectMapper.convertValue(document,Map.class);
-    }
-
-    class IndexThread extends Thread{
-        private Thread t;
-        private String name;
-        private Blob fileToInsert;
-
-        IndexThread(String name,Blob fileToInsert){
-            this.name = name;
-            this.fileToInsert = fileToInsert;
-            log.info("Creating Thread - {}", name);
-        }
-
-        public void start(){
-            log.info("Starting Thread - {} with file {}",name,fileToInsert.getName());
-            if(t == null){
-                t = new Thread(this,name);
-                t.start();
-            }
-        }
-
-        @Override
-        public void run() {
-
-            BulkRequest bulkRequest = new BulkRequest();
-
-            ReadChannel blobReader = null;
-            BufferedReader reader;
-            try{
-                log.info("Thread {} running",name);
-                blobReader = fileToInsert.reader(Blob.BlobSourceOption.userProject("client-intelligence-705116"));
-                reader = new BufferedReader(Channels.newReader(blobReader,"UTF-8"));
-                int i = 1;
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    if(i == 5000){
-                        log.info("Sending bulk index request...");
-                        String result = restClient.bulk(bulkRequest,RequestOptions.DEFAULT).buildFailureMessage();
-                        log.info("Bulk request response: {}",result);
-                        bulkRequest = new BulkRequest();
-                        i = 1;
-                    }
-                    String[] dataValues = line.split(",");
-                    Map<String,Object> documentObject = buildDocument(dataValues);
-
-                    bulkRequest.add( new IndexRequest("transaction","_doc",dataValues[0]).source(documentObject));
-                    i++;
-                }
-                reader.close();
-            } catch (Exception e){
-                log.error("Exception: ",e);
-            }finally {
-                blobReader.close();
-            }
-
-            log.info("Thread {} with file {} finished",name,fileToInsert.getName());
-        }
+        return transactionDocuments;
     }
 
 }

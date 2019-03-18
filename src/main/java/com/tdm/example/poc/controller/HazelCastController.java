@@ -4,7 +4,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/poc/mongo")
-public class MongoDbController {
+@RequestMapping("/poc/hzl")
+public class HazelCastController {
 
 }

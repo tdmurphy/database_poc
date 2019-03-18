@@ -16,8 +16,9 @@ public interface PostgresRepository extends CrudRepository<PostgresEntity,String
             "FROM transactions " +
             "WHERE roleIdCust = :custId " +
             "AND counterpartyCin = :ctrprty " +
-            "AND transDate BETWEEN '2018-01-01' AND '2018-12-31'")
-    PostgresLimitedEntity testQuery12(@Param("custId") Long roleIdCust, @Param("ctrprty") String counterpartyCin);
+            "AND transDate BETWEEN '2018-01-01' AND '2018-12-31' " +
+            "ORDER BY transDate ASC")
+    List<PostgresLimitedEntity> testQuery12(@Param("custId") Long roleIdCust, @Param("ctrprty") String counterpartyCin, Pageable pageable);
 
 
     @Query(value = "SELECT  new com.tdm.example.poc.entity.PostgresLimitedEntity(transDate, counterpartyName, counterpartyCtryCode," +

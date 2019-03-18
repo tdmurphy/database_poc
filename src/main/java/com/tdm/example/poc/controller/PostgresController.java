@@ -46,15 +46,15 @@ public class PostgresController {
 
 
     @GetMapping("/test-query1-2/{roleIdCust}/{counterpartyCin}")
-    public PostgresLimitedEntity testQuery12(@PathVariable("roleIdCust") Long roleIdCust, @PathVariable("counterpartyCin") String counterpartyCin) {
+    public List<PostgresLimitedEntity> testQuery12(@PathVariable("roleIdCust") Long roleIdCust, @PathVariable("counterpartyCin") String counterpartyCin) {
 
         Long executionStartTime = System.currentTimeMillis();
-        PostgresLimitedEntity resultSet = postgresRepository.testQuery12(roleIdCust, counterpartyCin);
+        List<PostgresLimitedEntity> resultSet = postgresRepository.testQuery12(roleIdCust, counterpartyCin, PageRequest.of(0,100));
         TimeUtil executeUtil = new TimeUtil();
         Long executionEndTime = System.currentTimeMillis();
         executeUtil.setTotalExecutionTime(executionEndTime-executionStartTime);
         executeUtil.setQueryTime(executionEndTime-executionStartTime);
-        executeUtil.setResultSetSize(resultSet != null ? 1 : 0);
+        executeUtil.setResultSetSize(resultSet.size());
 
         ArrayList<TimeUtil> timeUtils = timings.get("query_1_2");
         timeUtils.add(executeUtil);

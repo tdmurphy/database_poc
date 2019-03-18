@@ -15,7 +15,7 @@ public class HomeController {
         response = response + "   - /bq = contains endpoints to query BigQuery<br/>";
         response = response + "   - /psql = contains endpoints to query Postgresql db hosted on GCP<br/>";
         response = response + "   - /els = contains endpoints to query ElasticSearch<br/>";
-        response = response + "   - /mongo = contains endpoints to query MongoDb<br/>";
+        response = response + "   - /hzl = contains endpoints to query Hazelcast<br/>";
 
         return response;
     }
