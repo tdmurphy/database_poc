@@ -22,24 +22,24 @@ public class BigQueryController {
     }
 
 
-    @GetMapping("/test-query-1_2/{roleIdCust}/{counterpartyCin}")
+    @GetMapping("/test-query1-2/{roleIdCust}/{counterpartyCin}")
     public List<String> testQuery12(@PathVariable("roleIdCust") Long roleIdCust, @PathVariable("counterpartyCin") String counterpartyCin){
         return bigQueryService.testQuery12(roleIdCust,counterpartyCin);
     }
 
-    @GetMapping("/test-query-10_11/{roleIdCust}/{transType}")
+    @GetMapping("/test-query10-11/{roleIdCust}/{transType}")
     public List<String> testQuery1011(@PathVariable("roleIdCust") Long roleIdCust, @PathVariable("transType") String transType){
         return bigQueryService.testQuery1011(roleIdCust,transType);
     }
 
-    @GetMapping("/test-query-20/{roleIdCust}/{transType}/{transType2}/{creditDebit}/{transCurrency}")
+    @GetMapping("/test-query20/{roleIdCust}/{transType}/{transType2}/{creditDebit}/{transCurrency}")
     public List<String> testQuery20(@PathVariable("roleIdCust") Long roleIdCust, @PathVariable("transType") String transType,
                                     @PathVariable("transType2") String transType2, @PathVariable("creditDebit") String creditDebit,
                                     @PathVariable("transCurrency") String transCurrency){
         return bigQueryService.testQuery20(roleIdCust,transType,transType2,creditDebit,transCurrency);
     }
 
-    @GetMapping("/test-query-21/{roleIdCust}/{transType}/{transType2}/{transType3}/{creditDebit}")
+    @GetMapping("/test-query21/{roleIdCust}/{transType}/{transType2}/{transType3}/{creditDebit}")
     public List<String> testQuery21(@PathVariable("roleIdCust") Long roleIdCust, @PathVariable("transType") String transType,
                                     @PathVariable("transType2") String transType2, @PathVariable("transType3") String transType3,
                                     @PathVariable("creditDebit") String creditDebit){
