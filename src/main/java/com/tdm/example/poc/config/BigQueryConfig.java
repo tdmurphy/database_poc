@@ -6,7 +6,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @Data
 @ConfigurationProperties(prefix = "spring.bigquery")
 public class BigQueryConfig {
-    private String credentialsLocation = "C:/Users/thoma/Documents/csv_poc/";
-    private String credentialsName = "gcp-cred.json";
-    private String projectId = "client-intelligence-705116";
+    private String credentialsLocation = "";
+    private String credentialsName = "";
+    private String projectId = "";
 }
